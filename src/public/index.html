@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blockchain App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+        }
+        .block {
+            border: 1px solid #000;
+            padding: 10px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Blockchain Data</h1>
+        <button onclick="getBlockchain()">Get Blockchain Data</button>
+        <div id="blockchain"></div>
+        <h2>Add Data to Blockchain</h2>
+        <input type="text" id="dataInput" placeholder="Enter data">
+        <button onclick="addData()">Add Data</button>
+    </div>
+
+    <script>
+        async function getBlockchain() {
+            const response = await fetch('/getChain');
+            const blockchain = await response.json();
+            const blockchainDiv = document.getElementById('blockchain');
+            blockchainDiv.innerHTML = '';
+            blockchain.forEach(block => {
+                const blockDiv = document.createElement('div');
+                blockDiv.className = 'block';
+                blockDiv.innerHTML = `
+                    <p>Index: ${block.index}</p>
+                    <p>Timestamp: ${block.timestamp}</p>
+                    <p>Data: ${block.data}</p>
+                    <p>Previous Hash: ${block.previousHash}</p>
+                    <p>Hash: ${block.hash}</p>
+                `;
+                blockchainDiv.appendChild(blockDiv);
+            });
+        }
+
+        async function addData() {
+            const dataInput = document.getElementById('dataInput').value;
+            const response = await fetch('/addData', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ data: dataInput }),
+            });
+            if (response.ok) {
+                alert('Data added successfully');
+                getBlockchain(); // Refresh the blockchain data
+            } else {
+                alert('Failed to add data');
+            }
+        }
+    </script>
+</body>
+</html>
