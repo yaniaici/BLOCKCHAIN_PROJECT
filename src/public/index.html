@@ -7,16 +7,65 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
+            background: linear-gradient(to right, #00aaff, #0066ff);
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
         }
         .container {
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+            padding: 20px;
+            width: 90%;
             max-width: 800px;
-            margin: auto;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
         }
         .block {
-            border: 1px solid #000;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid #ffffff;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        .block:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        input[type="text"] {
+            width: calc(100% - 22px);
             padding: 10px;
             margin: 10px 0;
+            border: none;
+            border-radius: 5px;
+            outline: none;
+        }
+        button {
+            background: #0066ff;
+            border: none;
+            padding: 10px 20px;
+            color: #ffffff;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #0052cc;
+        }
+        .message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .message.success {
+            background: #28a745;
+        }
+        .message.error {
+            background: #dc3545;
         }
     </style>
 </head>
@@ -28,23 +77,40 @@
         <h2>Add Data to Blockchain</h2>
         <input type="text" id="dataInput" placeholder="Enter data">
         <button onclick="addData()">Add Data</button>
+        <h2>Mine Pending Data</h2>
+        <button onclick="mineData()">Mine Data</button>
+        <h2>Validate Blockchain</h2>
+        <button onclick="validateChain()">Validate Chain</button>
+        <div id="validationResult"></div>
+        <div id="message"></div>
     </div>
 
     <script>
+        async function showMessage(message, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.innerHTML = message;
+            messageDiv.className = `message ${type}`;
+            setTimeout(() => {
+                messageDiv.innerHTML = '';
+                messageDiv.className = '';
+            }, 3000);
+        }
+
         async function getBlockchain() {
             const response = await fetch('/getChain');
             const blockchain = await response.json();
             const blockchainDiv = document.getElementById('blockchain');
             blockchainDiv.innerHTML = '';
-            blockchain.forEach(block => {
+            blockchain.forEach((block, index) => {
                 const blockDiv = document.createElement('div');
                 blockDiv.className = 'block';
                 blockDiv.innerHTML = `
-                    <p>Index: ${block.index}</p>
-                    <p>Timestamp: ${block.timestamp}</p>
-                    <p>Data: ${block.data}</p>
+                    <p>Index: ${index}</p>
+                    <p>Timestamp: ${new Date(block.timestamp).toLocaleString()}</p>
+                    <p>Data: ${JSON.stringify(block.data)}</p>
                     <p>Previous Hash: ${block.previousHash}</p>
                     <p>Hash: ${block.hash}</p>
+                    <p>Nonce: ${block.nonce}</p>
                 `;
                 blockchainDiv.appendChild(blockDiv);
             });
@@ -60,11 +126,33 @@
                 body: JSON.stringify({ data: dataInput }),
             });
             if (response.ok) {
-                alert('Data added successfully');
+                showMessage('Data added successfully', 'success');
                 getBlockchain(); // Refresh the blockchain data
             } else {
-                alert('Failed to add data');
+                showMessage('Failed to add data', 'error');
             }
+        }
+
+        async function mineData() {
+            const response = await fetch('/mineData', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+            if (response.ok) {
+                showMessage('Data mined successfully', 'success');
+                getBlockchain(); // Refresh the blockchain data
+            } else {
+                showMessage('Failed to mine data', 'error');
+            }
+        }
+
+        async function validateChain() {
+            const response = await fetch('/validateChain');
+            const validationResult = await response.json();
+            const validationResultDiv = document.getElementById('validationResult');
+            validationResultDiv.innerHTML = `Blockchain is ${validationResult.isValid ? 'valid' : 'invalid'}`;
         }
     </script>
 </body>

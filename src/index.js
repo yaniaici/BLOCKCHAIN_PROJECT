@@ -1,16 +1,12 @@
 const express = require("express");
-const { Web3 } = require('web3');
 const bodyParser = require("body-parser");
+const { Web3 } = require('web3');
 const path = require('path');
 const { Blockchain } = require('./components/models/Blockchain');
-const { Block } = require('./components/models/Block');
 
-
-
-const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const web3 = new Web3("http://localhost:8545");
 const app = express();
 const PORT = 3000;
-
 
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -21,14 +17,27 @@ app.listen(PORT, () => {
 
 let blockchain = new Blockchain();
 
-
 app.post('/addData', (req, res) => {
-    let data = req.body.data;
-    let newBlock = new Block(blockchain.getLatestBlock().index + 1, new Date().toISOString(), data);
-    blockchain.addBlock(newBlock);
-    res.status(200).send("Data added successfully");
+    const data = req.body.data; // Supongamos que los datos se envían en el cuerpo como { "data": "some data" }
+    console.log(`Adding data: ${data}`);
+    blockchain.addData(data);
+    res.status(200).send("Data added successfully. Ready for mining.");
 });
 
 app.get('/getChain', (req, res) => {
-    res.status(200).send(blockchain.chain);
+    res.status(200).json(blockchain.chain);
+});
+
+app.post('/mineData', (req, res) => {
+    const success = blockchain.minePendingData();
+    if (success) {
+        res.status(200).send("Data mined successfully.");
+    } else {
+        res.status(400).send("No data to mine.");
+    }
+});
+
+app.get('/validateChain', (req, res) => {
+    const isValid = blockchain.isChainValid();
+    res.status(200).json({ isValid });
 });
