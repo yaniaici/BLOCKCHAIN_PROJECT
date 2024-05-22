@@ -214,8 +214,10 @@
             const wallet = await response.json();
             const walletDiv = document.getElementById('walletData');
             walletDiv.innerHTML = `
-                <p>Public Key: ${wallet.publicKey}</p>
-                <p>Private Key: ${wallet.privateKey}</p>
+                <div class="block">
+                    <p>Public Key: ${wallet.publicKey}</p>
+                    <p>Private Key: ${wallet.privateKey}</p>
+                </div>
             `;
         }
 
