@@ -1,36 +1,55 @@
 const { Block } = require('./Block');
+const { Transaction } = require('./Transaction');
 
 class Blockchain {
     constructor() {
         this.chain = [this.createGenesisBlock()];
         this.difficulty = 2;
-        this.pendingData = [];
+        this.pendingTransactions = [];
+        this.miningReward = 100;
     }
 
     createGenesisBlock() {
-        return new Block(Date.now(), "Genesis Block", "0");
+        return new Block(Date.now(), [], "0");
     }
 
     getLatestBlock() {
         return this.chain[this.chain.length - 1];
     }
 
-    addData(data) {
-        this.pendingData.push(data);
+    minePendingTransactions(miningRewardAddress) {
+        const rewardTx = new Transaction(null, miningRewardAddress, this.miningReward);
+        this.pendingTransactions.push(rewardTx);
+
+        let block = new Block(Date.now(), this.pendingTransactions, this.getLatestBlock().hash);
+        block.mineBlock(this.difficulty);
+
+        console.log('Block successfully mined!');
+        this.chain.push(block);
+
+        this.pendingTransactions = [];
     }
 
-    minePendingData() {
-        if (this.pendingData.length === 0) return false;
+    createTransaction(transaction) {
+        this.pendingTransactions.push(transaction);
+    }
 
-        const previousBlock = this.getLatestBlock();
-        const newBlock = new Block(Date.now(), this.pendingData, previousBlock.hash);
-        console.log("Mining new block...");
-        console.log(`Previous Hash: ${previousBlock.hash}`);
-        newBlock.mineBlock(this.difficulty);
+    getBalanceOfAddress(address) {
+        let balance = 0;
 
-        this.chain.push(newBlock);
-        this.pendingData = [];
-        return true;
+        for (const block of this.chain) {
+            for (const trans of block.transactions) {
+                if (trans.fromAddress === address) {
+                    balance -= trans.amount;
+                }
+
+                if (trans.toAddress === address) {
+                    balance += trans.amount;
+                }
+            }
+        }
+
+        return balance;
     }
 
     isChainValid() {
@@ -38,19 +57,11 @@ class Blockchain {
             const currentBlock = this.chain[i];
             const previousBlock = this.chain[i - 1];
 
-            console.log(`Validating Block ${i}:`);
-            console.log(`Current Hash: ${currentBlock.hash}`);
-            console.log(`Calculated Hash: ${currentBlock.calculateHash()}`);
-            console.log(`Previous Hash: ${currentBlock.previousHash}`);
-            console.log(`Expected Previous Hash: ${previousBlock.hash}`);
-
             if (currentBlock.hash !== currentBlock.calculateHash()) {
-                console.log(`Block ${i} has invalid hash`);
                 return false;
             }
 
             if (currentBlock.previousHash !== previousBlock.hash) {
-                console.log(`Block ${i} has invalid previous hash`);
                 return false;
             }
         }
