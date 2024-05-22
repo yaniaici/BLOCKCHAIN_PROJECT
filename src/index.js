@@ -1,15 +1,22 @@
-const express = require("express");
-const bodyParser = require("body-parser");
-const { Web3 } = require('web3');
-const path = require('path');
-const { Blockchain } = require('./components/models/Blockchain');
-const { Transaction } = require('./components/models/Transaction');
+import express from 'express';
+import bodyParser from 'body-parser';
+import Web3 from 'web3';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { Blockchain } from './components/models/Blockchain.js';
+import { Transaction } from './components/models/Transaction.js';
+import { Wallet } from './components/models/Wallet.js';
 
 const web3 = new Web3("http://localhost:8545");
 const app = express();
 const PORT = 3000;
 
 app.use(bodyParser.json());
+
+// __dirname replacement for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.listen(PORT, () => {
@@ -19,9 +26,11 @@ app.listen(PORT, () => {
 let blockchain = new Blockchain();
 
 app.post('/createTransaction', (req, res) => {
-    const { fromAddress, toAddress, amount } = req.body;
+    const { fromAddress, toAddress, amount, privateKey } = req.body;
+    const wallet = Wallet.fromPrivateKey(privateKey);
     const transaction = new Transaction(fromAddress, toAddress, amount);
-    blockchain.createTransaction(transaction);
+    wallet.signTransaction(transaction);
+    blockchain.addTransaction(transaction);
     res.status(200).send("Transaction created successfully");
 });
 
@@ -44,4 +53,12 @@ app.get('/getBalance/:address', (req, res) => {
 app.get('/validateChain', (req, res) => {
     const isValid = blockchain.isChainValid();
     res.status(200).json({ isValid });
+});
+
+app.post('/createWallet', (req, res) => {
+    const wallet = new Wallet();
+    res.status(200).json({
+        publicKey: wallet.publicKey,
+        privateKey: wallet.privateKey
+    });
 });

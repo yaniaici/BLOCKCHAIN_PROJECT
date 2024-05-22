@@ -11,10 +11,11 @@
             color: #ffffff;
             margin: 0;
             padding: 0;
+            height: 100%;
+            overflow-y: auto;
             display: flex;
             justify-content: center;
-            align-items: center;
-            height: 100vh;
+            align-items: flex-start;
         }
         .container {
             background: rgba(0, 0, 0, 0.7);
@@ -23,6 +24,33 @@
             width: 90%;
             max-width: 800px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            margin: 20px 0;
+        }
+        .tabs {
+            display: flex;
+            cursor: pointer;
+        }
+        .tab {
+            padding: 10px 20px;
+            background: #0066ff;
+            border: 1px solid #ffffff;
+            border-bottom: none;
+            border-radius: 10px 10px 0 0;
+            margin-right: 5px;
+            transition: background 0.3s;
+        }
+        .tab:hover, .tab.active {
+            background: #0052cc;
+        }
+        .tab-content {
+            display: none;
+            padding: 20px;
+            border: 1px solid #ffffff;
+            border-radius: 0 10px 10px 10px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .tab-content.active {
+            display: block;
         }
         .block {
             background: rgba(255, 255, 255, 0.1);
@@ -31,11 +59,21 @@
             margin: 10px 0;
             border-radius: 5px;
             transition: background 0.3s;
+            word-wrap: break-word; /* Allow words to break */
+            overflow: hidden; /* Hide overflow */
+            text-overflow: ellipsis; /* Add ellipsis (...) */
         }
         .block:hover {
             background: rgba(255, 255, 255, 0.2);
         }
-        input[type="text"] {
+        .address {
+            white-space: nowrap; /* Prevent line breaks */
+            overflow: hidden; /* Hide overflow */
+            text-overflow: ellipsis; /* Add ellipsis (...) */
+            display: block; /* Ensure block display for div */
+            max-width: 100%; /* Ensure it doesn't overflow parent */
+        }
+        input[type="text"], input[type="number"] {
             width: calc(100% - 22px);
             padding: 10px;
             margin: 10px 0;
@@ -71,28 +109,63 @@
 </head>
 <body>
     <div class="container">
-        <h1>Blockchain Data</h1>
-        <button onclick="getBlockchain()">Get Blockchain Data</button>
-        <div id="blockchain"></div>
-        <h2>Add Transaction</h2>
-        <input type="text" id="fromAddress" placeholder="From Address">
-        <input type="text" id="toAddress" placeholder="To Address">
-        <input type="number" id="amount" placeholder="Amount">
-        <button onclick="createTransaction()">Create Transaction</button>
-        <h2>Mine Pending Transactions</h2>
-        <input type="text" id="miningRewardAddress" placeholder="Your Address">
-        <button onclick="mineTransactions()">Mine Transactions</button>
-        <h2>Check Balance</h2>
-        <input type="text" id="balanceAddress" placeholder="Address">
-        <button onclick="getBalance()">Get Balance</button>
-        <div id="balanceResult"></div>
-        <h2>Validate Blockchain</h2>
-        <button onclick="validateChain()">Validate Chain</button>
-        <div id="validationResult"></div>
+        <div class="tabs">
+            <div class="tab active" onclick="openTab('blockchain')">Blockchain Data</div>
+            <div class="tab" onclick="openTab('wallet')">Create Wallet</div>
+            <div class="tab" onclick="openTab('transaction')">Add Transaction</div>
+            <div class="tab" onclick="openTab('mine')">Mine Transactions</div>
+            <div class="tab" onclick="openTab('balance')">Check Balance</div>
+            <div class="tab" onclick="openTab('validate')">Validate Blockchain</div>
+        </div>
+        <div id="blockchain" class="tab-content active">
+            <h1>Blockchain Data</h1>
+            <button onclick="getBlockchain()">Get Blockchain Data</button>
+            <div id="blockchainData"></div>
+        </div>
+        <div id="wallet" class="tab-content">
+            <h2>Create Wallet</h2>
+            <button onclick="createWallet()">Create Wallet</button>
+            <div id="walletData"></div>
+        </div>
+        <div id="transaction" class="tab-content">
+            <h2>Add Transaction</h2>
+            <input type="text" id="fromAddress" placeholder="From Address">
+            <input type="text" id="toAddress" placeholder="To Address">
+            <input type="number" id="amount" placeholder="Amount">
+            <input type="text" id="privateKey" placeholder="Private Key">
+            <button onclick="createTransaction()">Create Transaction</button>
+        </div>
+        <div id="mine" class="tab-content">
+            <h2>Mine Pending Transactions</h2>
+            <input type="text" id="miningRewardAddress" placeholder="Your Address">
+            <button onclick="mineTransactions()">Mine Transactions</button>
+        </div>
+        <div id="balance" class="tab-content">
+            <h2>Check Balance</h2>
+            <input type="text" id="balanceAddress" placeholder="Address">
+            <button onclick="getBalance()">Get Balance</button>
+            <div id="balanceResult"></div>
+        </div>
+        <div id="validate" class="tab-content">
+            <h2>Validate Blockchain</h2>
+            <button onclick="validateChain()">Validate Chain</button>
+            <div id="validationResult"></div>
+        </div>
         <div id="message"></div>
     </div>
 
     <script>
+        function openTab(tabId) {
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => content.classList.remove('active'));
+
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+
+            document.getElementById(tabId).classList.add('active');
+            document.querySelector(`.tab[onclick="openTab('${tabId}')"]`).classList.add('active');
+        }
+
         async function showMessage(message, type) {
             const messageDiv = document.getElementById('message');
             messageDiv.innerHTML = message;
@@ -106,7 +179,7 @@
         async function getBlockchain() {
             const response = await fetch('/getChain');
             const blockchain = await response.json();
-            const blockchainDiv = document.getElementById('blockchain');
+            const blockchainDiv = document.getElementById('blockchainData');
             blockchainDiv.innerHTML = '';
             blockchain.forEach((block, index) => {
                 const blockDiv = document.createElement('div');
@@ -131,16 +204,32 @@
             });
         }
 
+        async function createWallet() {
+            const response = await fetch('/createWallet', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+            const wallet = await response.json();
+            const walletDiv = document.getElementById('walletData');
+            walletDiv.innerHTML = `
+                <p>Public Key: ${wallet.publicKey}</p>
+                <p>Private Key: ${wallet.privateKey}</p>
+            `;
+        }
+
         async function createTransaction() {
             const fromAddress = document.getElementById('fromAddress').value;
             const toAddress = document.getElementById('toAddress').value;
             const amount = document.getElementById('amount').value;
+            const privateKey = document.getElementById('privateKey').value;
             const response = await fetch('/createTransaction', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ fromAddress, toAddress, amount }),
+                body: JSON.stringify({ fromAddress, toAddress, amount, privateKey }),
             });
             if (response.ok) {
                 showMessage('Transaction created successfully', 'success');
@@ -172,7 +261,7 @@
             const response = await fetch(`/getBalance/${address}`);
             const result = await response.json();
             const balanceResultDiv = document.getElementById('balanceResult');
-            balanceResultDiv.innerHTML = `Balance: ${parseFloat(result.balance)}`;
+            balanceResultDiv.innerHTML = `Balance: ${parseInt(result.balance)}`;
         }
 
         async function validateChain() {

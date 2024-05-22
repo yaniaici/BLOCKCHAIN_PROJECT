@@ -18,14 +18,19 @@ Make sure you have Node.js installed. You can download it from [Node.js](https:/
 ### Installation
 
 1. Clone the repository:
+
     ```sh
     git clone https://github.com/yourusername/blockchain-app.git
     ```
+
 2. Navigate to the project directory:
+
     ```sh
     cd blockchain-app/src
     ```
+
 3. Install the dependencies:
+
     ```sh
     npm install
     ```
@@ -33,9 +38,11 @@ Make sure you have Node.js installed. You can download it from [Node.js](https:/
 ### Running the Application
 
 1. Start the server:
+
     ```sh
     node index.js
     ```
+
 2. Open your web browser and go to `http://localhost:3000`.
 
 ## Usage

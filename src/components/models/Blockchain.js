@@ -1,5 +1,5 @@
-const { Block } = require('./Block');
-const { Transaction } = require('./Transaction');
+import { Block } from './Block.js';
+import { Transaction } from './Transaction.js';
 
 class Blockchain {
     constructor() {
@@ -30,7 +30,15 @@ class Blockchain {
         this.pendingTransactions = [];
     }
 
-    createTransaction(transaction) {
+    addTransaction(transaction) {
+        if (!transaction.fromAddress || !transaction.toAddress) {
+            throw new Error('Transaction must include from and to address');
+        }
+
+        if (!transaction.isValid()) {
+            throw new Error('Cannot add invalid transaction to chain');
+        }
+
         this.pendingTransactions.push(transaction);
     }
 
@@ -57,6 +65,10 @@ class Blockchain {
             const currentBlock = this.chain[i];
             const previousBlock = this.chain[i - 1];
 
+            if (!currentBlock.hasValidTransactions()) {
+                return false;
+            }
+
             if (currentBlock.hash !== currentBlock.calculateHash()) {
                 return false;
             }
@@ -69,4 +81,4 @@ class Blockchain {
     }
 }
 
-module.exports = { Blockchain };
+export { Blockchain };
