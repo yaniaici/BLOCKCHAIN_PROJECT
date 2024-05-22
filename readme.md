@@ -2,7 +2,7 @@
 
 Welcome to the Blockchain Application! This project is a simple blockchain implementation with a user-friendly interface to interact with the blockchain.
 
-## Features
+## Features (v. LDIF)
 
 - **Add Data to Blockchain**: Users can add data to the blockchain, which is stored in a pending state until mined.
 - **Mine Data**: Mine the pending data into a new block, securing it on the blockchain with proof of work.
@@ -12,6 +12,8 @@ Welcome to the Blockchain Application! This project is a simple blockchain imple
 - **Stylish UI**: A visually appealing interface with smooth animations and a blue gradient background.
 - **Transactions**: Implement a structure of transaction that includes sender, receiver, and amount. Validate transactions to ensure data is correct and consistent.
 - **Wallets and Addresses**: Generate addresses from public keys. Implement wallets that handle multiple addresses and private keys.
+
+## Features (v. MDIF)
 
 ### Prerequisites
 
