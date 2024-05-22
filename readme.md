@@ -10,6 +10,8 @@ Welcome to the Blockchain Application! This project is a simple blockchain imple
 - **Validate Blockchain**: Validate the integrity of the blockchain to ensure no data has been tampered with.
 - **User Notifications**: Informative messages for user actions, replacing alerts with in-page notifications.
 - **Stylish UI**: A visually appealing interface with smooth animations and a blue gradient background.
+- **Transactions**: Implement a structure of transaction that includes sender, receiver, and amount. Validate transactions to ensure data is correct and consistent.
+- **Wallets and Addresses**: Generate addresses from public keys. Implement wallets that handle multiple addresses and private keys.
 
 ### Prerequisites
 
@@ -66,6 +68,18 @@ Make sure you have Node.js installed. You can download it from [Node.js](https:/
 
 1. Click the "Validate Chain" button to check the integrity of the blockchain.
 2. The validation result will be displayed, indicating whether the blockchain is valid or not.
+
+### Transactions
+
+1. Enter the sender address, receiver address, amount, and private key in the input fields under "Add Transaction".
+2. Click the "Create Transaction" button to add the transaction to the blockchain.
+3. A success message will appear if the transaction is created successfully. The transaction will be included in the next mined block.
+
+### Wallets and Addresses
+
+1. Click the "Create Wallet" button to generate a new wallet.
+2. The wallet details, including public and private keys, will be displayed.
+3. You can use these keys to manage multiple addresses and private keys within the wallet.
 
 ## Personal Note
 
