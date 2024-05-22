@@ -30,8 +30,12 @@ app.post('/createTransaction', (req, res) => {
     const wallet = Wallet.fromPrivateKey(privateKey);
     const transaction = new Transaction(fromAddress, toAddress, amount);
     wallet.signTransaction(transaction);
-    blockchain.addTransaction(transaction);
-    res.status(200).send("Transaction created successfully");
+    try {
+        blockchain.addTransaction(transaction);
+        res.status(200).send("Transaction created successfully");
+    } catch (error) {
+        res.status(400).send(error.message);
+    }
 });
 
 app.post('/mineTransactions', (req, res) => {
