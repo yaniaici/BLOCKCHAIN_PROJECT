@@ -1,6 +1,7 @@
 import { Block } from "./Block.js";
 import { Transaction } from "./Transaction.js";
 import WebSocket from "ws";
+import crypto from "crypto";
 
 class Blockchain {
   constructor() {
@@ -9,6 +10,7 @@ class Blockchain {
     this.pendingTransactions = [];
     this.miningReward = 100;
     this.nodes = new Set();
+    this.sockets = new Map();
   }
 
   createGenesisBlock() {
@@ -20,26 +22,17 @@ class Blockchain {
   }
 
   minePendingTransactions(miningRewardAddress) {
-    const rewardTx = new Transaction(
-      null,
-      miningRewardAddress,
-      this.miningReward
-    );
+    const rewardTx = new Transaction(null, miningRewardAddress, this.miningReward);
     this.pendingTransactions.push(rewardTx);
 
-    let block = new Block(
-      Date.now(),
-      this.pendingTransactions,
-      this.getLatestBlock().hash
-    );
+    let block = new Block(Date.now(), this.pendingTransactions, this.getLatestBlock().hash);
     block.mineBlock(this.difficulty);
 
     console.log("Block successfully mined!");
-    this.broadcastChain();
     this.chain.push(block);
-
     this.pendingTransactions = [];
-    
+
+    this.broadcastChain();
   }
 
   addTransaction(transaction) {
@@ -51,9 +44,9 @@ class Blockchain {
       throw new Error("Cannot add invalid transaction to chain");
     }
 
+    this.pendingTransactions.push(transaction);
     this.broadcastTransaction(transaction);
     console.log("Transaction added successfully");
-    this.pendingTransactions.push(transaction);
   }
 
   getBalanceOfAddress(address) {
@@ -96,45 +89,71 @@ class Blockchain {
 
   addNode(nodeUrl) {
     this.nodes.add(nodeUrl);
+    this.connectToNode(nodeUrl);
+  }
+
+  connectToNode(nodeUrl) {
+    if (this.sockets.has(nodeUrl)) {
+      return;
+    }
+
+    const ws = new WebSocket(nodeUrl);
+    ws.on('open', () => {
+      console.log(`Connected to node: ${nodeUrl}`);
+      this.sockets.set(nodeUrl, ws);
+      ws.send(JSON.stringify({ type: 'CHAIN', chain: this.chain }));
+    });
+
+    ws.on('message', (message) => {
+      const data = JSON.parse(message);
+      console.log(`Received message from ${nodeUrl}`, data);
+      switch (data.type) {
+        case 'CHAIN':
+          this.handleReceivedChain(data.chain);
+          break;
+        case 'TRANSACTION':
+          this.handleReceivedTransaction(data.transaction);
+          break;
+      }
+    });
+
+    ws.on('error', (error) => {
+      console.log(`Error connecting to node: ${nodeUrl}`, error);
+    });
+
+    ws.on('close', () => {
+      console.log(`Connection to node closed: ${nodeUrl}`);
+      this.sockets.delete(nodeUrl);
+    });
   }
 
   broadcastChain() {
-    for (const node of this.nodes) {
-      const ws = new WebSocket(node);
-    console.log("Broadcasting chain to", node);
-      ws.on("open", () => {
-        ws.send(JSON.stringify({ type: "CHAIN", chain: this.chain }));
-      });
-    }
+    console.log("Broadcasting chain");
+    this.sockets.forEach((ws, nodeUrl) => {
+      console.log(`Sending chain to node ${nodeUrl}`);
+      ws.send(JSON.stringify({ type: 'CHAIN', chain: this.chain }));
+    });
   }
 
   broadcastTransaction(transaction) {
-    for (const node of this.nodes) {
-      const ws = new WebSocket(node);
-      console.log("Broadcasting transaction to", node);
-      ws.on("open", () => {
-        ws.send(JSON.stringify({ type: "TRANSACTION", transaction }));
-      });
-    }
+    console.log("Broadcasting transaction");
+    this.sockets.forEach((ws, nodeUrl) => {
+      console.log(`Sending transaction to node ${nodeUrl}`);
+      ws.send(JSON.stringify({ type: 'TRANSACTION', transaction }));
+    });
   }
 
   handleReceivedChain(receivedChain) {
-    if (
-      receivedChain.length > this.chain.length &&
-      this.isValidChain(receivedChain)
-    ) {
+    console.log("Received chain", receivedChain);
+    if (receivedChain.length > this.chain.length && this.isValidChain(receivedChain)) {
       this.chain = receivedChain;
       this.pendingTransactions = [];
     }
   }
 
   handleReceivedTransaction(transactionData) {
-    console.log(transactionData);
-    const transaction = new Transaction(
-      transactionData.fromAddress,
-      transactionData.toAddress,
-      transactionData.amount
-    );
+    console.log("Received transaction", transactionData);
+    const transaction = new Transaction(transactionData.fromAddress, transactionData.toAddress, transactionData.amount);
     transaction.signature = transactionData.signature;
     if (transaction.isValid()) {
       this.pendingTransactions.push(transaction);
@@ -152,9 +171,9 @@ class Blockchain {
           .createHash("sha256")
           .update(
             currentBlock.previousHash +
-              currentBlock.timestamp +
-              JSON.stringify(currentBlock.transactions) +
-              currentBlock.nonce
+            currentBlock.timestamp +
+            JSON.stringify(currentBlock.transactions) +
+            currentBlock.nonce
           )
           .digest("hex")
       ) {
