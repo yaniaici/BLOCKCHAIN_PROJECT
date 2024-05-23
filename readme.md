@@ -15,6 +15,8 @@ Welcome to the Blockchain Application! This project is a simple blockchain imple
 
 ## Features (v. MDIF)
 
+- **Multi-Node Compatibility**: Implemented support for multiple nodes, allowing the blockchain network to synchronize data, transactions and mined blocks seamlessly across different nodes.
+
 ### Prerequisites
 
 Make sure you have Node.js installed. You can download it from [Node.js](https://nodejs.org/).
