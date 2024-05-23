@@ -6,14 +6,18 @@ import { fileURLToPath } from 'url';
 import { Blockchain } from './components/models/Blockchain.js';
 import { Transaction } from './components/models/Transaction.js';
 import { Wallet } from './components/models/Wallet.js';
+import WebSocket from 'ws';
 
 const web3 = new Web3("http://localhost:8545");
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
+const P2P_PORT = process.env.P2P_PORT || 6000;
+const peers = process.env.PEERS ? process.env.PEERS.split(',') : [];
+let blockchain = new Blockchain();
+
 
 app.use(bodyParser.json());
 
-// __dirname replacement for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -23,7 +27,51 @@ app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
 
-let blockchain = new Blockchain();
+// Configure WebSocket Server
+const server = new WebSocket.Server({ port: P2P_PORT });
+const sockets = [];
+
+server.on('connection', (ws) => {
+    sockets.push(ws);
+    ws.on('message', (message) => {
+        const data = JSON.parse(message);
+
+        switch (data.type) {
+            case 'CHAIN':
+                blockchain.handleReceivedChain(data.chain);
+                break;
+            case 'TRANSACTION':
+                blockchain.handleReceivedTransaction(data.transaction);
+                break;
+        }
+    });
+    ws.send(JSON.stringify({ type: 'CHAIN', chain: blockchain.chain }));
+});
+
+const connectToPeers = () => {
+    peers.forEach(peer => {
+        const ws = new WebSocket(peer);
+        ws.on('open', () => {
+            sockets.push(ws);
+            ws.send(JSON.stringify({ type: 'CHAIN', chain: blockchain.chain }));
+        });
+        ws.on('message', (message) => {
+            const data = JSON.parse(message);
+
+            switch (data.type) {
+                case 'CHAIN':
+                    blockchain.handleReceivedChain(data.chain);
+                    break;
+                case 'TRANSACTION':
+                    blockchain.handleReceivedTransaction(data.transaction);
+                    break;
+            }
+        });
+    });
+};
+
+connectToPeers();
+
 
 app.post('/createTransaction', (req, res) => {
     const { fromAddress, toAddress, amount, privateKey } = req.body;
