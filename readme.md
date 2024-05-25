@@ -16,6 +16,7 @@ Welcome to the Blockchain Application! This project is a simple blockchain imple
 ## Features (v. MDIF)
 
 - **Multi-Node Compatibility**: Implemented support for multiple nodes, allowing the blockchain network to synchronize data, transactions and mined blocks seamlessly across different nodes.
+- **Consensus Algorithm**: Implemented a basic consensus algorithm where nodes accept the longest valid chain, ensuring network-wide consistency and data integrity.
 
 ### Prerequisites
 
