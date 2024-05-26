@@ -6,6 +6,8 @@ import { Blockchain } from "./components/models/Blockchain.js";
 import { Transaction } from "./components/models/Transaction.js";
 import { Wallet } from "./components/models/Wallet.js";
 import WebSocket, { WebSocketServer } from "ws"; 
+import Web3 from "web3";
+import { readFileSync } from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,6 +16,11 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const P2P_PORT = process.env.P2P_PORT || 6000;
 const peers = process.env.PEERS ? process.env.PEERS.split(',') : [];
+
+const web3 = new Web3('http://localhost:8545');  // Inicializar Web3
+const { abi } = JSON.parse(readFileSync('SimpleStorage.json', 'utf8'));
+const contractAddress = readFileSync('contractAddress.txt', 'utf8').trim();
+const contract = new web3.eth.Contract(abi, contractAddress);
 
 let blockchain = new Blockchain();
 
